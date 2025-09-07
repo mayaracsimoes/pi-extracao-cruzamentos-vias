@@ -34,7 +34,31 @@ _, imagem_limiarizada = cv2.threshold(imagem_original, 45, 255, cv2.THRESH_BINAR
 # O tamanho do kernel não é especificado, usaremos 3x3 que é um valor comum.
 imagem_mediana = cv2.medianBlur(imagem_limiarizada, 3)
 
+# --- (c) Erosão morfológica em disco 15x15 ---
+def aplicar_erosao(mask_binaria, tamanho=(15, 15)):
+    """Aplica erosão com elemento estruturante elíptico."""
+    se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, tamanho)
+    erodida = cv2.erode(mask_binaria, se, iterations=1)
+    # garante saída binária 0/255
+    erodida = ((erodida > 0).astype(np.uint8)) * 255
+    return erodida
+
+# Aplica sobre a saída da mediana
+imagem_erosao = aplicar_erosao(imagem_mediana, (15, 15))
+
+# --- VISUALIZAÇÃO ---
+
 exibir_etapas(
     [imagem_original, imagem_limiarizada, imagem_mediana],
     ["Original (Figura 4)", "Etapa (a): Limiarização (<=45)", "Etapa (b): Filtro de Mediana"]
 )
+
+# Comparação etapa (b) -> (c)
+exibir_etapas(
+    [imagem_mediana, imagem_erosao],
+    ["Entrada (b): Filtro de Mediana", "Saída (c): Erosão 15×15 (disco)"]
+)
+
+cv2.imwrite("saida_a_limiar.png", imagem_limiarizada)
+cv2.imwrite("saida_b_mediana.png", imagem_mediana)
+cv2.imwrite("saida_c_erosao.png", imagem_erosao)
